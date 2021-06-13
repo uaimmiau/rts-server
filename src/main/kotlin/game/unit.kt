@@ -19,12 +19,15 @@ enum class UnitType {
 }
 
 fun spawnUnit(unit: Unit) {
-    val msg = jsonMessageString(ServerSideEvent.SPAWN_UNIT, unit)
-    Players.broadcastMessage(msg)
+    Players.broadcastData(ServerSideEvent.SPAWN_UNIT, unit)
 }
 
 fun moveUnit(globalId: Int, requestingPlayer: Player?, destination: Position?) {
-    Units.find { it.globalId == globalId && it.playerId == requestingPlayer?.id }?.destination = destination
+    val unit = Units.find { it.globalId == globalId && it.playerId == requestingPlayer?.id }
+    if (unit != null) {
+        unit.destination = destination
+        Players.broadcastData(ServerSideEvent.MOVE_UNIT, unit)
+    }
 }
 
 val Units = mutableListOf<Unit>()

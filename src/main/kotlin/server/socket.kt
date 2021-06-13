@@ -50,6 +50,7 @@ class ServerSocket {
         when (messageModel.eventType) {
             ClientSideEvent.MOVE_UNIT -> {
                 val moveModel = messageModel.eventData as UnitMoveDataModel
+                println("Moving unit")
                 moveUnit(moveModel.globalId, player, moveModel.destination)
             }
             ClientSideEvent.SPAWN_UNIT -> TODO()
@@ -62,12 +63,12 @@ class ServerSocket {
 object Players {
     private val players = ConcurrentHashMap<Session, Player>()
 
-    fun broadcastMessage(message: String) {
-        println("Broadcasting message: $message")
+    fun broadcastData(eventType: ServerSideEvent, eventData: Any) {
+        println("Broadcasting $eventData for event: $eventType")
         players.forEach {
             val session = it.key
             if (session.isOpen) {
-                session.remote.sendString(message)
+                session.sendData(eventType, eventData)
             }
         }
     }

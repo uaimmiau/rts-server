@@ -1,79 +1,99 @@
 package server
 
-import game.PlayerClient
+import game.Player
 import game.Units
+import game.moveUnit
 import game.newPlayer
 import org.eclipse.jetty.websocket.api.Session
-import org.eclipse.jetty.websocket.api.WebSocketListener
-import java.util.concurrent.ConcurrentLinkedQueue
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage
+import org.eclipse.jetty.websocket.api.annotations.WebSocket
+import server.json.*
+import java.util.concurrent.ConcurrentHashMap
 
-class ServerSocket : WebSocketListener {
+@WebSocket
+class ServerSocket {
 
-    override fun onWebSocketClose(statusCode: Int, reason: String?) {
-        Clients.disconnectClosed()
-    }
-
-    override fun onWebSocketError(cause: Throwable?) {
-        println(cause)
-        TODO("Not yet implemented")
-    }
-
-    override fun onWebSocketBinary(payload: ByteArray?, offset: Int, len: Int) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onWebSocketText(message: String) {
-        println("Received message: $message")
-        val messageModel = parseMessage(message)
-        if (messageModel.eventType == GameEvent.MOVE_UNIT) {
-            val moveModel: UnitMoveModel = messageModel.eventData as UnitMoveModel
-            Units.find { it.globalId == moveModel.globalId }?.destination = moveModel.destination
-            println(Units)
+    @OnWebSocketConnect
+    fun onConnect(session: Session) {
+        val sessionId = session.getCookie(Cookies.SESSION_ID)
+        if (sessionId == null) {
+            // New player
+            Players.add(session)
+        } else {
+            // Player reconnecting (e.g. page reload)
+            val player = Players.findForSessionId(sessionId)
+            if (player == null) {
+                // Cookie expired
+                Players.add(session)
+            } else {
+                // Player found, restoring state
+                Players.updateSession(player, session)
+                session.sendData(ServerSideEvent.PLAYER_HANDSHAKE, PlayerHandshakeDataModel(player.nickname, player.id, sessionId, Cookies.SESSION_ID.cookieName))
+            }
         }
-        // future event types here
+        Units.forEach { session.sendData(ServerSideEvent.SPAWN_UNIT, it) }
     }
 
-    override fun onWebSocketConnect(session: Session) {
-        Clients.add(session)
+    @OnWebSocketClose
+    fun onClose(session: Session, statusCode: Int, reason: String?) {
+        session.disconnect()
+        // TODO delete player (or not?)
+    }
+
+    @OnWebSocketMessage
+    fun onTextMessage(session: Session, message: String) {
+        val player = Players.findForSession(session)
+        val messageModel = parseMessage(message)
+        println(messageModel)
+        when (messageModel.eventType) {
+            ClientSideEvent.MOVE_UNIT -> {
+                val moveModel = messageModel.eventData as UnitMoveDataModel
+                moveUnit(moveModel.globalId, player, moveModel.destination)
+            }
+            ClientSideEvent.SPAWN_UNIT -> TODO()
+            // future event types here
+        }
     }
 
 }
 
-object Clients {
-    private val clients = ConcurrentLinkedQueue<PlayerClient>()
+object Players {
+    private val players = ConcurrentHashMap<Session, Player>()
 
     fun broadcastMessage(message: String) {
         println("Broadcasting message: $message")
-        clients.forEach {
-            val session = it.session
+        players.forEach {
+            val session = it.key
             if (session.isOpen) {
                 session.remote.sendString(message)
             }
         }
     }
 
-    fun disconnectClosed() {
-        clients.forEach {
-            val session = it.session
-            if (!session.isOpen) {
-                session.disconnect()
-                clients.remove(it)
-            }
-        }
-    }
 
-    fun add(client: Session) {
+    fun add(session: Session) {
         println("New player connected")
         // TODO random nickname
         val randomNickname = "test"
-        val playerClient = newPlayer(client, randomNickname)
-        clients.add(playerClient)
-        val msgModel = NicknameAssignModel(randomNickname)
-        client.remote.sendString(jsonMessageString(GameEvent.NICKNAME_ASSIGN, msgModel))
-        playerClient.spawnAllUnits()
+        val randomSessionId = randomSessionId()
+        val player = newPlayer(randomSessionId, randomNickname)
+        player.spawnAllUnits()
+
+        players[session] = player
+        session.sendData(ServerSideEvent.PLAYER_HANDSHAKE, PlayerHandshakeDataModel(randomNickname, player.id, randomSessionId, Cookies.SESSION_ID.cookieName))
+    }
+
+    fun findForSession(session: Session) = players[session]
+    fun findForSessionId(sessionId: String): Player? = players.values.find { it.sessionId == sessionId }
+
+    fun updateSession(player: Player, newSession: Session) {
+        players.forEach { if (it.value === player) players.remove(it.key) }
+        players[newSession] = player
     }
 
     val numberOfClients
-    get() = clients.size
-}
+    get() = players.size
 
+}

@@ -1,10 +1,10 @@
 package game
 
-import server.Clients
-import server.GameEvent
-import server.jsonMessageString
+import server.Players
+import server.json.ServerSideEvent
+import server.json.jsonMessageString
 
-data class Unit(val globalId: Int, val type: UnitType, val position: Position, var destination: Position?)
+data class Unit(val playerId: Int, val globalId: Int, val type: UnitType, val position: Position, var destination: Position?)
 
 data class Position(var x: Int, var y: Int, var z: Int)
 
@@ -19,8 +19,12 @@ enum class UnitType {
 }
 
 fun spawnUnit(unit: Unit) {
-    val msg = jsonMessageString(GameEvent.SPAWN_UNIT, unit)
-    Clients.broadcastMessage(msg)
+    val msg = jsonMessageString(ServerSideEvent.SPAWN_UNIT, unit)
+    Players.broadcastMessage(msg)
+}
+
+fun moveUnit(globalId: Int, requestingPlayer: Player?, destination: Position?) {
+    Units.find { it.globalId == globalId && it.playerId == requestingPlayer?.id }?.destination = destination
 }
 
 val Units = mutableListOf<Unit>()

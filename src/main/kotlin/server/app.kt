@@ -1,16 +1,14 @@
 package server
 
-import spark.kotlin.Http
-import spark.kotlin.ignite
+import spark.Spark.*
 
 fun main() {
-    val http: Http = ignite()
 
-    with(http) {
-        staticFiles.location("/public")
-        get("/") {
-            response.type("text/html")
-            response.redirect("main.html")
-        }
+    staticFiles.location("/public")
+    webSocket("/socket", ServerSocket::class.java)
+    get("/") {req, res ->
+        res.type("text/html")
+        res.redirect("main.html")
     }
+
 }

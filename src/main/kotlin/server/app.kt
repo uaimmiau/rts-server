@@ -8,7 +8,7 @@ fun main() {
     webSocket("/socket", ServerSocket::class.java)
     get("/") {req, res ->
         res.type("text/html")
-        res.redirect("main.html")
+        res.redirect("index.html")
     }
 
 }

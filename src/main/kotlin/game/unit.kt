@@ -4,7 +4,7 @@ import server.Players
 import server.json.ServerSideEvent
 import server.json.jsonMessageString
 
-data class Unit(val playerId: Int, val globalId: Int, val type: UnitType, val position: Position, var destination: Position?)
+data class Unit(val playerId: Int, val globalId: Int, val type: UnitType, var position: Position, var destination: Position?)
 
 data class Position(var x: Int, var y: Int, var z: Int)
 
@@ -22,9 +22,10 @@ fun spawnUnit(unit: Unit) {
     Players.broadcastData(ServerSideEvent.SPAWN_UNIT, unit)
 }
 
-fun moveUnit(globalId: Int, requestingPlayer: Player?, destination: Position?) {
+fun moveUnit(globalId: Int, requestingPlayer: Player?, position: Position, destination: Position?) {
     val unit = Units.find { it.globalId == globalId && it.playerId == requestingPlayer?.id }
     if (unit != null) {
+        unit.position = position
         unit.destination = destination
         Players.broadcastData(ServerSideEvent.MOVE_UNIT, unit)
     }

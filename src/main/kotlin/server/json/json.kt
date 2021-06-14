@@ -28,7 +28,7 @@ fun jsonMessageString(eventType: ServerSideEvent, eventData: Any) =
 data class IncomingMessageModel(val eventType: ClientSideEvent, val eventData: Any)
 
 data class PlayerHandshakeDataModel(val nickname: String, val playerId: Int, val sessionId: String, val sessIdCookieName: String)
-data class UnitMoveDataModel(val globalId: Int, val destination: Position)
+data class UnitMoveDataModel(val globalId: Int, val position: Position, val destination: Position?)
 
 val typeToken = object : TypeToken<IncomingMessageModel>() {}.type!!
 val gsonBuilder: GsonBuilder = GsonBuilder().registerTypeAdapter(typeToken, MessageDeserializer())

@@ -51,7 +51,7 @@ class ServerSocket {
             ClientSideEvent.MOVE_UNIT -> {
                 val moveModel = messageModel.eventData as UnitMoveDataModel
                 println("Moving unit")
-                moveUnit(moveModel.globalId, player, moveModel.destination)
+                moveUnit(moveModel.globalId, player, moveModel.position, moveModel.destination)
             }
             ClientSideEvent.SPAWN_UNIT -> TODO()
             // future event types here

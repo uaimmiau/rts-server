@@ -8,6 +8,9 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
+# No need for those I guess
+src/resources/
+
 # AWS User-specific
 .idea/**/aws.xml
 

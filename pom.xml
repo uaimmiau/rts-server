@@ -53,6 +53,14 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.1.2</version>
             </plugin>
+            <plugin>
+                <groupId>com.heroku.sdk</groupId>
+                <artifactId>heroku-maven-plugin</artifactId>
+                <version>3.0.3</version>
+                <configuration>
+                    <appName>projekt-rts</appName>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

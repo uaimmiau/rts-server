@@ -52114,7 +52114,7 @@ class Main {
 
 
             // Websocket
-            this.websocket = new _communication_ClientSocket__WEBPACK_IMPORTED_MODULE_12__.default('ws://localhost:4567/socket');
+            this.websocket = new _communication_ClientSocket__WEBPACK_IMPORTED_MODULE_12__.default(`wss://${location.hostname}:${location.port}/socket`);
 
             // Get nickname from server
             this.websocket.addEventListener(_communication_GameEvents__WEBPACK_IMPORTED_MODULE_13__.default.PLAYER_HANDSHAKE, ({
@@ -52208,48 +52208,6 @@ class Main {
             }
         }
 
-
-
-
-        // if (Config.moveForward) this.player.translateZ(2)
-        // if (Config.moveBackward) this.player.translateZ(-2)
-        // if (Config.rotateRight) this.player.rotation.y -= 0.01
-        // if (Config.rotateLeft) this.player.rotation.y += 0.01
-
-
-        // Have camera follow player and set orbit controls target
-        if (_Config__WEBPACK_IMPORTED_MODULE_3__.default.moveForward || _Config__WEBPACK_IMPORTED_MODULE_3__.default.moveBackward || _Config__WEBPACK_IMPORTED_MODULE_3__.default.rotateLeft || _Config__WEBPACK_IMPORTED_MODULE_3__.default.rotateRight) {
-            // const camVect = new Vector3(0, Config.camHeight, -Config.camDistance)
-            // const camPos = camVect.applyMatrix4(this.player.matrixWorld);
-            // this.camera.position.x = camPos.x
-            // this.camera.position.y = camPos.y
-            // this.camera.position.z = camPos.z
-            // this.camera.lookAt(this.player.position)
-            // this.camera.updateProjectionMatrix()
-            // this.camera.rotateZ(this.controls.getPolarAngle())
-            // this.camera.rotateY(this.controls.getAzimuthalAngle())
-        }
-        // this.controls.target = this.player.position
-        // console.log(this.camera.position)
-
-
-
-
-        // let ray = new Ray(this.player.position, this.player.getWorldDirection(new Vector3()))
-        // this.raycaster.ray = ray
-        // let intersects = this.raycaster.intersectObjects(this.boxes)
-        // this.div.innerHTML = `Trafionych celów: ${intersects.length}`
-        // this.prev.innerHTML = ''
-        // if (intersects.length != 0) {
-        //     for (let inter of intersects) {
-        //         inter.object.changeColor()
-        //         let obj = {
-        //             distance: inter.distance,
-        //             point: inter.point
-        //         }
-        //         this.prev.innerHTML += JSON.stringify(obj, null, 4)
-        //     }
-        // }
 
         this.renderer.render(this.scene, this.camera);
         requestAnimationFrame(this.render.bind(this));

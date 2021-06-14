@@ -9,7 +9,7 @@
 .idea/**/shelf
 
 # No need for those I guess
-src/main/resources/**
+src/main/resources/public/
 
 # AWS User-specific
 .idea/**/aws.xml

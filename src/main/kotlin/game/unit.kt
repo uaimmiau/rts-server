@@ -2,9 +2,10 @@ package game
 
 import server.Players
 import server.json.ServerSideEvent
-import server.json.jsonMessageString
+import server.json.UnitKilledMessageModel
+import kotlin.random.Random
 
-data class Unit(val playerId: Int, val globalId: Int, val type: UnitType, var position: Position, var destination: Position?)
+data class Unit(val playerId: Int, val globalId: Int, val type: UnitType, var position: Position, var destination: Position?, var dead: Boolean)
 
 data class Position(var x: Int, var y: Int, var z: Int)
 
@@ -32,3 +33,24 @@ fun moveUnit(globalId: Int, requestingPlayer: Player?, position: Position, desti
 }
 
 val Units = mutableListOf<Unit>()
+
+fun shoot(globalId: Int, enemyId: Int, distance: Double) {
+    val enemy = Units.find { it.globalId == enemyId }
+    if (enemy != null) {
+        val chance = 80 - (distance / 4)
+        println("Chance to kill: $chance %")
+        val shot = Random.nextInt(100)
+        val success = shot > chance
+        if (success) {
+            enemy.dead = true
+            Units.remove(enemy)
+            Players.broadcastData(ServerSideEvent.UNIT_KILLED, UnitKilledMessageModel(enemyId))
+            Players.checkWin()
+        } else {
+            println("Miss!")
+        }
+    }
+}
+
+
+

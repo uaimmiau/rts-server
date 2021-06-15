@@ -13,11 +13,22 @@ class MessageDeserializer : JsonDeserializer<IncomingMessageModel> {
         val eventType: ClientSideEvent
         val eventDataType: Type
         val et = jsonObj.get("eventType").asString
-        if (et == "moveUnit") {
-            eventType = ClientSideEvent.MOVE_UNIT
-            eventDataType = object : TypeToken<UnitMoveDataModel>() {}.type!!
-        } else {
-            throw IllegalArgumentException("Invalid event type: $et")
+        when (et) {
+            "moveUnit" -> {
+                eventType = ClientSideEvent.MOVE_UNIT
+                eventDataType = object : TypeToken<UnitMoveDataModel>() {}.type!!
+            }
+            "shootAtEnemy" -> {
+                eventType = ClientSideEvent.SHOOT_AT_ENEMY
+                eventDataType = object : TypeToken<ShootAtEnemyDataModel>() {}.type!!
+            }
+            "newGame" -> {
+                eventType = ClientSideEvent.NEW_GAME
+                eventDataType = object : TypeToken<Any>() {}.type!!
+            }
+            else -> {
+                throw IllegalArgumentException("Invalid event type: $et")
+            }
         }
         val eventData = jsonObj.get("eventData").asJsonObject
         return IncomingMessageModel(eventType, context.deserialize(eventData, eventDataType))

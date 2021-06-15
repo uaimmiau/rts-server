@@ -1,9 +1,6 @@
 package server
 
-import game.Player
-import game.Units
-import game.moveUnit
-import game.newPlayer
+import game.*
 import org.eclipse.jetty.websocket.api.Session
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect
@@ -46,14 +43,21 @@ class ServerSocket {
     fun onTextMessage(session: Session, message: String) {
         val player = Players.findForSession(session)
         val messageModel = parseMessage(message)
-        println(messageModel)
         when (messageModel.eventType) {
             ClientSideEvent.MOVE_UNIT -> {
                 val moveModel = messageModel.eventData as UnitMoveDataModel
-                println("Moving unit")
+                //println("Moving unit")
                 moveUnit(moveModel.globalId, player, moveModel.position, moveModel.destination)
             }
             ClientSideEvent.SPAWN_UNIT -> TODO()
+            ClientSideEvent.SHOOT_AT_ENEMY -> {
+                println(messageModel)
+                val shootModel = messageModel.eventData as ShootAtEnemyDataModel
+                shoot(shootModel.enemyGlobalId, shootModel.enemyGlobalId, shootModel.distance)
+            }
+            ClientSideEvent.NEW_GAME -> {
+                TODO("NEW GAME")
+            }
             // future event types here
         }
     }
@@ -64,7 +68,7 @@ object Players {
     private val players = ConcurrentHashMap<Session, Player>()
 
     fun broadcastData(eventType: ServerSideEvent, eventData: Any) {
-        println("Broadcasting $eventData for event: $eventType")
+        //println("Broadcasting $eventData for event: $eventType")
         players.forEach {
             val session = it.key
             if (session.isOpen) {
@@ -94,7 +98,20 @@ object Players {
         players[newSession] = player
     }
 
-    val numberOfClients
+    fun checkWin() {
+        players.forEach { player ->
+            if (player.value.units.all { it.dead }) {
+                if (numberOfPlayers == 2) {
+                    val winner = players.values.find { it.id != playerId }
+                    if (winner != null) {
+                        broadcastData(ServerSideEvent.GAME_OVER, GameOverMessageModel(winner.id, winner.nickname))
+                    }
+                }
+            }
+        }
+    }
+
+    val numberOfPlayers
     get() = players.size
 
 }

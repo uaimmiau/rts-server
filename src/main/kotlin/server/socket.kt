@@ -56,7 +56,9 @@ class ServerSocket {
                 shoot(shootModel.enemyGlobalId, shootModel.enemyGlobalId, shootModel.distance)
             }
             ClientSideEvent.NEW_GAME -> {
-                TODO("NEW GAME")
+                Units.clear()
+                Players.broadcastData(ServerSideEvent.NEW_GAME, null)
+                Players.newGame()
             }
             // future event types here
         }
@@ -67,7 +69,7 @@ class ServerSocket {
 object Players {
     private val players = ConcurrentHashMap<Session, Player>()
 
-    fun broadcastData(eventType: ServerSideEvent, eventData: Any) {
+    fun broadcastData(eventType: ServerSideEvent, eventData: Any?) {
         //println("Broadcasting $eventData for event: $eventType")
         players.forEach {
             val session = it.key
@@ -81,13 +83,12 @@ object Players {
     fun add(session: Session) {
         println("New player connected")
         // TODO random nickname
-        val randomNickname = "test"
         val randomSessionId = randomSessionId()
-        val player = newPlayer(randomSessionId, randomNickname)
+        val player = newPlayer(randomSessionId)
         player.spawnAllUnits()
 
         players[session] = player
-        session.sendData(ServerSideEvent.PLAYER_HANDSHAKE, PlayerHandshakeDataModel(randomNickname, player.id, randomSessionId, Cookies.SESSION_ID.cookieName))
+        session.sendData(ServerSideEvent.PLAYER_HANDSHAKE, PlayerHandshakeDataModel(player.nickname, player.id, randomSessionId, Cookies.SESSION_ID.cookieName))
     }
 
     fun findForSession(session: Session) = players[session]
@@ -102,11 +103,25 @@ object Players {
         players.forEach { player ->
             if (player.value.units.all { it.dead }) {
                 if (numberOfPlayers == 2) {
-                    val winner = players.values.find { it.id != playerId }
+                    val winner = players.values.find { it.id != player.value.id }
                     if (winner != null) {
                         broadcastData(ServerSideEvent.GAME_OVER, GameOverMessageModel(winner.id, winner.nickname))
                     }
                 }
+            }
+        }
+    }
+
+    fun clearPlayers() {
+        this.players.clear()
+    }
+
+    fun newGame() {
+        this.players.forEach{
+            val session = it.key
+            this.players.remove(session)
+            if (session.isOpen) {
+                session.sendData(ServerSideEvent.NEW_GAME, null)
             }
         }
     }

@@ -4,13 +4,15 @@ import com.google.gson.*
 import com.google.gson.reflect.TypeToken
 import game.Position
 import org.eclipse.jetty.websocket.api.Session
+import java.util.concurrent.Future
 
 enum class ServerSideEvent(val jsonName: String) {
     PLAYER_HANDSHAKE("playerHandshake"),
     MOVE_UNIT("moveUnit"),
     SPAWN_UNIT("spawnUnit"),
     UNIT_KILLED("unitKilled"),
-    GAME_OVER("gameOver")
+    GAME_OVER("gameOver"),
+    NEW_GAME("newGame")
 }
 
 enum class ClientSideEvent(val jsonName: String) {
@@ -21,7 +23,7 @@ enum class ClientSideEvent(val jsonName: String) {
 }
 
 
-fun jsonMessageString(eventType: ServerSideEvent, eventData: Any) =
+fun jsonMessageString(eventType: ServerSideEvent, eventData: Any?) =
     """
             {
                 "eventType": "${eventType.jsonName}",
@@ -44,5 +46,6 @@ val gson: Gson = gsonBuilder.create()
 
 fun parseMessage(message: String): IncomingMessageModel = gson.fromJson(message, typeToken)
 
-fun Session.sendData(eventType: ServerSideEvent, eventData: Any) =
-    this.remote.sendString(jsonMessageString(eventType, eventData))
+fun Session.sendData(eventType: ServerSideEvent, eventData: Any?): Future<Void>? =
+    this.remote.sendStringByFuture(jsonMessageString(eventType, eventData))
+

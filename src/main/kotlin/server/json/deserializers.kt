@@ -30,7 +30,8 @@ class MessageDeserializer : JsonDeserializer<IncomingMessageModel> {
                 throw IllegalArgumentException("Invalid event type: $et")
             }
         }
-        val eventData = jsonObj.get("eventData").asJsonObject
-        return IncomingMessageModel(eventType, context.deserialize(eventData, eventDataType))
+        val eventData = jsonObj.get("eventData")
+        val eventDataJson = if (eventData.isJsonObject) eventData.asJsonObject else null
+        return IncomingMessageModel(eventType, context.deserialize(eventDataJson, eventDataType))
     }
 }

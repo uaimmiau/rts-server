@@ -15,8 +15,9 @@ const val START_UNIT_COUNT = 5
 var playerId = 0
 fun nextPlayerId() = playerId++
 
-fun newPlayer(sessionId: String, nickname: String): Player {
+fun newPlayer(sessionId: String): Player {
     val id = nextPlayerId()
+    val nickname = "Player$id"
     val playerUnits = mutableListOf<Unit>()
     val playerCount = Players.numberOfPlayers
     println(playerCount)
